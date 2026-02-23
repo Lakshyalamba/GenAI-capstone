@@ -1,6 +1,6 @@
 # GenAI Capstone Project
 
-A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset.
+A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset. Includes a standalone web dashboard for visual analysis and real-time predictions.
 
 ---
 
@@ -10,14 +10,42 @@ A machine learning project that predicts **cardiovascular health risk** using pa
 genai capstone/
 ├── Capstone.ipynb        # Main notebook (EDA + ML model)
 ├── synthetic_health.csv  # Dataset
+├── dashboard/
+│   ├── index.html        # 3-page web dashboard
+│   ├── style.css         # Dark glassmorphism design
+│   └── app.js            # Charts + prediction logic
 └── README.md
 ```
 
 ---
 
+## Dashboard
+
+A standalone web UI — no server needed, just open `dashboard/index.html` in any browser.
+
+**3 pages:**
+
+| Page | Contents |
+|---|---|
+| KPI Dashboard | Accuracy, Precision, Recall, F1, AUC-ROC metric cards + dataset stats |
+| Visual Analysis | ROC Curve, Confusion Matrix, Logistic Regression Feature Weights |
+| Prediction System | Manual input form → real-time cardiovascular risk score |
+
+**Model Results (from notebook):**
+
+| Metric | Value |
+|---|---|
+| Accuracy | 92.5% |
+| Precision | 92% |
+| Recall | 93% |
+| F1 Score | 92% |
+| AUC-ROC | 0.89 |
+
+---
+
 ## Dataset
 
-**File:** `synthetic_health.csv`  
+**File:** `synthetic_health.csv`
 **Rows:** 400 | **Columns:** 11
 
 | Column | Type | Description |
@@ -59,8 +87,6 @@ genai capstone/
 
 > **Note:** The dataset path in the notebook is set to `/content/synthetic_health.csv` which works directly in Colab.
 
----
-
 ### Option 2: Run Locally (VS Code / Jupyter)
 
 1. **Install dependencies:**
@@ -70,15 +96,16 @@ genai capstone/
 
 2. **Update the dataset path** in `Capstone.ipynb`:
    ```python
-   # Change this:
-   df = pd.read_csv('/content/synthetic_health.csv')
-   # To this:
    df = pd.read_csv('synthetic_health.csv')
    ```
 
-3. **Select the correct Python kernel** in VS Code (top-right of the notebook) — choose `/opt/homebrew/bin/python3`
+3. **Select the correct Python kernel** in VS Code (top-right of the notebook)
 
 4. Run all cells
+
+### Option 3: Open the Dashboard
+
+Double-click `dashboard/index.html` or drag it into Chrome/Safari — works offline.
 
 ---
 
