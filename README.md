@@ -1,3 +1,13 @@
+---
+title: CardioRisk AI
+emoji: ❤️
+colorFrom: blue
+colorTo: indigo
+sdk: streamlit
+app_file: dashboard/app.py
+pinned: false
+---
+
 # CardioRisk AI — Cardiovascular Risk Dashboard
 
 **Live Demo:** [huggingface.co/spaces/lakshyalamba/cardiorisk-ai](https://huggingface.co/spaces/lakshyalamba/cardiorisk-ai)
