@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CardioRisk AI — Health Risk Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>CardioRisk AI</h2>
+            <p>Cardiovascular Risk Analysis</p>
+        </div>
+        <nav class="nav">
+            <div class="nav-item active" onclick="showPage('kpi', this)" id="nav-kpi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+                KPI Dashboard
+            </div>
+            <div class="nav-item" onclick="showPage('visual', this)" id="nav-visual">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                Visual Analysis
+            </div>
+            <div class="nav-item" onclick="showPage('predict', this)" id="nav-predict">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v4l3 3" />
+                </svg>
+                Prediction System
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <strong>Model:</strong> Logistic Regression<br>
+            <strong>Dataset:</strong> 400 records<br>
+            <strong>Features:</strong> 10 health indicators
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+        <!-- PAGE 1: KPI DASHBOARD -->
+        <div class="page active" id="page-kpi">
+            <div class="page-header">
+                <h1>KPI Dashboard <span class="badge green">Model Trained</span></h1>
+                <p>Key performance metrics from the Logistic Regression model trained on synthetic health data</p>
+            </div>
+
+            <div class="section-divider">Model Performance</div>
+            <div class="kpi-grid">
+                <div class="kpi-card" style="--card-color: rgba(79,142,247,0.08)">
+                    <div class="kpi-label">Accuracy</div>
+                    <div class="kpi-value" style="color:#4f8ef7" id="acc-val">0%</div>
+                    <div class="kpi-sub">Correct predictions out of all</div>
+                    <div class="kpi-icon" style="background:rgba(79,142,247,0.12)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card" style="--card-color: rgba(124,95,247,0.08)">
+                    <div class="kpi-label">Precision</div>
+                    <div class="kpi-value" style="color:#7c5ff7" id="prec-val">0%</div>
+                    <div class="kpi-sub">True positives / predicted positives</div>
+                    <div class="kpi-icon" style="background:rgba(124,95,247,0.12)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c5ff7" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card" style="--card-color: rgba(34,197,94,0.08)">
+                    <div class="kpi-label">Recall</div>
+                    <div class="kpi-value" style="color:#22c55e" id="rec-val">0%</div>
+                    <div class="kpi-sub">True positives / actual positives</div>
+                    <div class="kpi-icon" style="background:rgba(34,197,94,0.12)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card" style="--card-color: rgba(245,158,11,0.08)">
+                    <div class="kpi-label">F1 Score</div>
+                    <div class="kpi-value" style="color:#f59e0b" id="f1-val">0%</div>
+                    <div class="kpi-sub">Harmonic mean of precision & recall</div>
+                    <div class="kpi-icon" style="background:rgba(245,158,11,0.12)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-card" style="--card-color: rgba(236,72,153,0.08)">
+                    <div class="kpi-label">AUC-ROC Score</div>
+                    <div class="kpi-value" style="color:#ec4899" id="auc-val">0%</div>
+                    <div class="kpi-sub">Area Under the ROC Curve</div>
+                    <div class="kpi-icon" style="background:rgba(236,72,153,0.12)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider">Dataset Overview</div>
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="num">400</div>
+                    <div class="lbl">Total Records</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="num">10</div>
+                    <div class="lbl">Features Used</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="num">80/20</div>
+                    <div class="lbl">Train / Test Split</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="num">320</div>
+                    <div class="lbl">Training Samples</div>
+                </div>
+            </div>
+
+            <div class="section-divider">Class Distribution</div>
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>Risk Class Distribution</h3>
+                    <p>Proportion of high-risk vs low-risk patients in dataset</p>
+                    <div class="chart-wrap" style="height:240px">
+                        <canvas id="distChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Feature Type Breakdown</h3>
+                    <p>Numerical vs categorical features in the dataset</p>
+                    <div class="chart-wrap" style="height:240px">
+                        <canvas id="featureTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: VISUAL ANALYSIS -->
+        <div class="page" id="page-visual">
+            <div class="page-header">
+                <h1>Visual Analysis <span class="badge blue">3 Charts</span></h1>
+                <p>Model evaluation visualizations — ROC curve, confusion matrix, and logistic regression feature
+                    weights</p>
+            </div>
+
+            <div class="section-divider">ROC Curve</div>
+            <div class="chart-card" style="margin-bottom:20px">
+                <h3>Receiver Operating Characteristic (ROC) Curve</h3>
+                <p>Shows tradeoff between True Positive Rate and False Positive Rate — AUC = 0.89</p>
+                <div class="chart-wrap" style="height:320px">
+                    <canvas id="rocChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section-divider">Confusion Matrix & Feature Importance</div>
+            <div class="chart-grid">
+
+                <div class="chart-card">
+                    <h3>Confusion Matrix</h3>
+                    <p>Predicted vs actual outcomes on 80 test samples</p>
+
+                    <div class="cm-axis-label" style="margin-bottom:6px">Predicted Label</div>
+                    <div style="display:flex;gap:10px;max-width:300px;margin:0 auto 4px">
+                        <div style="flex:1;text-align:center;font-size:11px;color:var(--muted);font-weight:600">No Risk
+                            (0)</div>
+                        <div style="flex:1;text-align:center;font-size:11px;color:var(--muted);font-weight:600">At Risk
+                            (1)</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;max-width:320px;margin:0 auto">
+                        <div
+                            style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap">
+                            Actual Label</div>
+                        <div class="cm-grid">
+                            <div class="cm-cell tn">
+                                12
+                                <span class="cm-label">True Negative</span>
+                            </div>
+                            <div class="cm-cell fp">
+                                5
+                                <span class="cm-label">False Positive</span>
+                            </div>
+                            <div class="cm-cell fn">
+                                1
+                                <span class="cm-label">False Negative</span>
+                            </div>
+                            <div class="cm-cell tp">
+                                62
+                                <span class="cm-label">True Positive</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:center;gap:20px;margin-top:16px;font-size:11.5px;color:var(--muted)">
+                        <span style="color:var(--success)">■</span> Correct &nbsp;
+                        <span style="color:var(--danger)">■</span> Incorrect
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Logistic Regression — Feature Weights</h3>
+                    <p>Coefficient magnitudes showing each feature's influence on risk prediction</p>
+                    <div class="chart-wrap" style="height:260px">
+                        <canvas id="coefChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- PAGE 3: PREDICTION SYSTEM -->
+        <div class="page" id="page-predict">
+            <div class="page-header">
+                <h1>Prediction System</h1>
+                <p>Enter patient health data below to estimate cardiovascular risk using the trained model</p>
+            </div>
+
+            <div class="pred-layout">
+                <!-- FORM -->
+                <div class="form-card">
+                    <h3>Patient Health Parameters</h3>
+                    <p>Fill in all fields and click Predict Risk to get an assessment</p>
+
+                    <div class="section-divider">Numerical Features</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Age (years)</label>
+                            <input type="number" id="f-age" placeholder="e.g. 55" min="18" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Systolic BP (mmHg)</label>
+                            <input type="number" id="f-sbp" placeholder="e.g. 140" min="80" max="220">
+                        </div>
+                        <div class="form-group">
+                            <label>Cholesterol (mg/dL)</label>
+                            <input type="number" id="f-chol" placeholder="e.g. 220" min="100" max="400">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Heart Rate (bpm)</label>
+                            <input type="number" id="f-hr" placeholder="e.g. 150" min="60" max="220">
+                        </div>
+                        <div class="form-group">
+                            <label>BMI</label>
+                            <input type="number" id="f-bmi" placeholder="e.g. 28.5" min="10" max="60" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="section-divider">Categorical Features</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Sex</label>
+                            <select id="f-sex">
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Chest Pain Type</label>
+                            <select id="f-cp">
+                                <option value="">Select...</option>
+                                <option value="typical">Typical Angina</option>
+                                <option value="atypical">Atypical Angina</option>
+                                <option value="non-anginal">Non-Anginal</option>
+                                <option value="asymptomatic">Asymptomatic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Smoker</label>
+                            <select id="f-smoker">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Diabetes</label>
+                            <select id="f-diabetes">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Exercise-Induced Angina</label>
+                            <select id="f-angina">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn-predict" onclick="runPrediction()">Predict Cardiovascular Risk</button>
+                </div>
+
+                <!-- RESULT -->
+                <div class="result-card">
+                    <h3>Risk Assessment Result</h3>
+                    <div id="result-placeholder" class="placeholder-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>Fill in all patient details and click Predict to see the cardiovascular risk assessment</p>
+                    </div>
+
+                    <div id="result-output" style="display:none">
+                        <div class="risk-gauge">
+                            <canvas id="gaugeChart"></canvas>
+                            <div class="gauge-center">
+                                <div class="gauge-pct" id="gauge-pct">0%</div>
+                                <div class="gauge-lbl">Risk Score</div>
+                            </div>
+                        </div>
+                        <div class="risk-level" id="risk-level">—</div>
+                        <div class="risk-desc" id="risk-desc">—</div>
+
+                        <div class="risk-factors" id="risk-factors-box">
+                            <h4>Key Risk Indicators</h4>
+                            <div id="risk-factors-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
