@@ -1,8 +1,6 @@
 # GenAI Capstone Project
 
-**Live Dashboard:** [https://cardioriskai.netlify.app/](https://cardioriskai.netlify.app/)
-
-A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset. Includes a standalone web dashboard for visual analysis and real-time predictions.
+A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset. Includes a **Streamlit** dashboard for visual analysis and real-time predictions.
 
 ---
 
@@ -13,9 +11,8 @@ genai capstone/
 ├── Capstone.ipynb        # Main notebook (EDA + ML model)
 ├── synthetic_health.csv  # Dataset
 ├── dashboard/
-│   ├── index.html        # 3-page web dashboard
-│   ├── style.css         # Dark glassmorphism design
-│   └── app.js            # Charts + prediction logic
+│   ├── app.py            # Streamlit dashboard (3-page UI)
+│   └── requirements.txt  # Python dependencies
 └── README.md
 ```
 
@@ -23,15 +20,15 @@ genai capstone/
 
 ## Dashboard
 
-A standalone web UI — no server needed, just open `dashboard/index.html` in any browser.
+A Streamlit web app — run locally with one command (see below).
 
 **3 pages:**
 
 | Page | Contents |
 |---|---|
-| KPI Dashboard | Accuracy, Precision, Recall, F1, AUC-ROC metric cards + dataset stats |
-| Visual Analysis | ROC Curve, Confusion Matrix, Logistic Regression Feature Weights |
-| Prediction System | Manual input form → real-time cardiovascular risk score |
+| 📊 KPI Dashboard | Accuracy, Precision, Recall, F1, AUC-ROC metric cards + dataset stats + distribution charts |
+| 📈 Visual Analysis | ROC Curve, Confusion Matrix, Logistic Regression Feature Weights |
+| 🔮 Prediction System | Manual input form → real-time cardiovascular risk score + gauge |
 
 **Model Results (from notebook):**
 
@@ -75,12 +72,14 @@ A standalone web UI — no server needed, just open `dashboard/index.html` in an
 | `matplotlib` | Plotting |
 | `seaborn` | Visualization |
 | `scikit-learn` | ML model, preprocessing & evaluation |
+| `streamlit` | Dashboard UI framework |
+| `plotly` | Interactive charts |
 
 ---
 
 ## How to Run
 
-### Option 1: Google Colab (Recommended)
+### Option 1: Google Colab (Recommended for Notebook)
 
 1. Open [colab.research.google.com](https://colab.research.google.com)
 2. Upload `Capstone.ipynb`
@@ -89,7 +88,7 @@ A standalone web UI — no server needed, just open `dashboard/index.html` in an
 
 > **Note:** The dataset path in the notebook is set to `/content/synthetic_health.csv` which works directly in Colab.
 
-### Option 2: Run Locally (VS Code / Jupyter)
+### Option 2: Run Notebook Locally (VS Code / Jupyter)
 
 1. **Install dependencies:**
    ```bash
@@ -105,9 +104,15 @@ A standalone web UI — no server needed, just open `dashboard/index.html` in an
 
 4. Run all cells
 
-### Option 3: Open the Dashboard
+### Option 3: Run the Streamlit Dashboard
 
-Double-click `dashboard/index.html` or drag it into Chrome/Safari — works offline.
+```bash
+cd dashboard
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Then open [http://localhost:8501](http://localhost:8501) in your browser.
 
 ---
 
