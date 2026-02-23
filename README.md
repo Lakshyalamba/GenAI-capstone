@@ -4,7 +4,7 @@ A machine learning project that predicts **cardiovascular health risk** using pa
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 genai capstone/
@@ -15,7 +15,7 @@ genai capstone/
 
 ---
 
-## 📊 Dataset
+## Dataset
 
 **File:** `synthetic_health.csv`  
 **Rows:** 400 | **Columns:** 11
@@ -36,7 +36,7 @@ genai capstone/
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 | Library | Purpose |
 |---|---|
@@ -48,20 +48,20 @@ genai capstone/
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
-### ▶️ Option 1: Google Colab (Recommended)
+### Option 1: Google Colab (Recommended)
 
 1. Open [colab.research.google.com](https://colab.research.google.com)
 2. Upload `Capstone.ipynb`
-3. Upload `synthetic_health.csv` using the Files panel (📁) on the left sidebar
+3. Upload `synthetic_health.csv` using the Files panel on the left sidebar
 4. Run all cells — all libraries are pre-installed in Colab
 
 > **Note:** The dataset path in the notebook is set to `/content/synthetic_health.csv` which works directly in Colab.
 
 ---
 
-### 💻 Option 2: Run Locally (VS Code / Jupyter)
+### Option 2: Run Locally (VS Code / Jupyter)
 
 1. **Install dependencies:**
    ```bash
@@ -82,7 +82,7 @@ genai capstone/
 
 ---
 
-## 🧠 What the Notebook Does
+## What the Notebook Does
 
 1. **Exploratory Data Analysis (EDA)** — shape, dtypes, missing values, outliers
 2. **Data Preprocessing** — fill missing values (median for numerical, mode for categorical), one-hot encoding, feature scaling
