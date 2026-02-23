@@ -1,6 +1,8 @@
-# GenAI Capstone Project
+# CardioRisk AI — Cardiovascular Risk Dashboard
 
-A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset. Includes a **Streamlit** dashboard for visual analysis and real-time predictions.
+**Live Demo:** [huggingface.co/spaces/lakshyalamba/cardiorisk-ai](https://huggingface.co/spaces/lakshyalamba/cardiorisk-ai)
+
+A machine learning project that predicts **cardiovascular health risk** using patient data. Built with Logistic Regression trained on 400 synthetic patient records. Features a Streamlit dashboard for interactive analysis and real-time predictions.
 
 ---
 
@@ -8,103 +10,54 @@ A machine learning project that predicts **cardiovascular health risk** using pa
 
 ```
 genai capstone/
-├── Capstone.ipynb        # Main notebook (EDA + ML model)
-├── synthetic_health.csv  # Dataset
+├── Capstone.ipynb        # EDA + model training notebook
+├── data/
+│   └── synthetic_health.csv  # Dataset (400 records, 11 features)
 ├── dashboard/
-│   ├── app.py            # Streamlit dashboard (3-page UI)
+│   ├── app.py            # Streamlit dashboard (3 pages)
 │   └── requirements.txt  # Python dependencies
 └── README.md
 ```
 
 ---
 
-## Dashboard
+## Dashboard Pages
 
-A Streamlit web app — run locally with one command (see below).
-
-**3 pages:**
-
-| Page | Contents |
+| Page | What it shows |
 |---|---|
-| 📊 KPI Dashboard | Accuracy, Precision, Recall, F1, AUC-ROC metric cards + dataset stats + distribution charts |
-| 📈 Visual Analysis | ROC Curve, Confusion Matrix, Logistic Regression Feature Weights |
-| 🔮 Prediction System | Manual input form → real-time cardiovascular risk score + gauge |
+| **KPI Dashboard** | Accuracy (92.5%), Precision (92%), Recall (93%), F1 (92%), AUC-ROC (89%) cards + dataset stats + distribution charts |
+| **Visual Analysis** | ROC Curve (AUC=0.89), Confusion Matrix heatmap, Logistic Regression Feature Weights |
+| **Prediction System** | Patient input form → real-time risk score gauge + key risk indicators |
 
-**Model Results (from notebook):**
+---
+
+## Model Performance
 
 | Metric | Value |
 |---|---|
-| Accuracy | 92.5% |
-| Precision | 92% |
-| Recall | 93% |
-| F1 Score | 92% |
-| AUC-ROC | 0.89 |
+| Accuracy | **92.5%** |
+| Precision | **92%** |
+| Recall | **93%** |
+| F1 Score | **92%** |
+| AUC-ROC | **0.89** |
 
 ---
 
 ## Dataset
 
-**File:** `synthetic_health.csv`
-**Rows:** 400 | **Columns:** 11
+**File:** `data/synthetic_health.csv` · **400 rows** · **11 columns**
 
-| Column | Type | Description |
-|---|---|---|
-| `age` | Numerical | Patient age |
-| `systolic_bp` | Numerical | Systolic blood pressure |
-| `cholesterol` | Numerical | Cholesterol level |
-| `max_heart_rate` | Numerical | Maximum heart rate |
-| `bmi` | Numerical | Body mass index |
-| `sex` | Categorical | Male / Female |
-| `chest_pain` | Categorical | Type of chest pain |
-| `smoker` | Categorical | Yes / No |
-| `diabetes` | Categorical | Yes / No |
-| `exercise_angina` | Categorical | Yes / No |
-| `risk` | Target (0/1) | Cardiovascular risk |
-
----
-
-## Dependencies
-
-| Library | Purpose |
+| Feature | Type |
 |---|---|
-| `pandas` | Data loading & manipulation |
-| `numpy` | Numerical operations |
-| `matplotlib` | Plotting |
-| `seaborn` | Visualization |
-| `scikit-learn` | ML model, preprocessing & evaluation |
-| `streamlit` | Dashboard UI framework |
-| `plotly` | Interactive charts |
+| `age`, `systolic_bp`, `cholesterol`, `max_heart_rate`, `bmi` | Numerical |
+| `sex`, `chest_pain`, `smoker`, `diabetes`, `exercise_angina` | Categorical |
+| `risk` | Target (0 = Low, 1 = High) |
 
 ---
 
 ## How to Run
 
-### Option 1: Google Colab (Recommended for Notebook)
-
-1. Open [colab.research.google.com](https://colab.research.google.com)
-2. Upload `Capstone.ipynb`
-3. Upload `synthetic_health.csv` using the Files panel on the left sidebar
-4. Run all cells — all libraries are pre-installed in Colab
-
-> **Note:** The dataset path in the notebook is set to `/content/synthetic_health.csv` which works directly in Colab.
-
-### Option 2: Run Notebook Locally (VS Code / Jupyter)
-
-1. **Install dependencies:**
-   ```bash
-   python3 -m pip install pandas numpy matplotlib seaborn scikit-learn --break-system-packages
-   ```
-
-2. **Update the dataset path** in `Capstone.ipynb`:
-   ```python
-   df = pd.read_csv('synthetic_health.csv')
-   ```
-
-3. **Select the correct Python kernel** in VS Code (top-right of the notebook)
-
-4. Run all cells
-
-### Option 3: Run the Streamlit Dashboard
+### Option 1 — Streamlit Dashboard (local)
 
 ```bash
 cd dashboard
@@ -112,13 +65,30 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Then open [http://localhost:8501](http://localhost:8501) in your browser.
+Open [http://localhost:8501](http://localhost:8501)
+
+### Option 2 — Notebook (Google Colab)
+
+1. Open [colab.research.google.com](https://colab.research.google.com)
+2. Upload `Capstone.ipynb` + `data/synthetic_health.csv`
+3. Run all cells
+
+### Option 3 — Notebook (local)
+
+```bash
+pip install pandas numpy matplotlib seaborn scikit-learn
+# Update dataset path in notebook to: pd.read_csv('data/synthetic_health.csv')
+jupyter notebook Capstone.ipynb
+```
 
 ---
 
-## What the Notebook Does
+## Tech Stack
 
-1. **Exploratory Data Analysis (EDA)** — shape, dtypes, missing values, outliers
-2. **Data Preprocessing** — fill missing values (median for numerical, mode for categorical), one-hot encoding, feature scaling
-3. **Model Training** — Logistic Regression with train/test split (80/20)
-4. **Evaluation** — accuracy score, confusion matrix, classification report, ROC-AUC curve
+| Tool | Purpose |
+|---|---|
+| `scikit-learn` | Logistic Regression model |
+| `pandas` / `numpy` | Data processing |
+| `streamlit` | Dashboard UI |
+| `plotly` | Interactive charts |
+| `matplotlib` / `seaborn` | Notebook visualizations |
