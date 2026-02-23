@@ -595,9 +595,9 @@ else:
                     font=dict(size=13, color="#94a3b8", family="Inter"),
                 )
                 fig_gauge.update_layout(
-                    **PLOTLY_LIGHT, height=260,
+                    **{**PLOTLY_LIGHT, "margin": dict(l=20, r=20, t=20, b=0)},
+                    height=260,
                     showlegend=False,
-                    margin=dict(l=20, r=20, t=20, b=0),
                 )
                 st.plotly_chart(fig_gauge, width="stretch")
 
