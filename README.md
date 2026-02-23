@@ -1,5 +1,7 @@
 # GenAI Capstone Project
 
+**Live Dashboard:** [https://cardioriskai.netlify.app/](https://cardioriskai.netlify.app/)
+
 A machine learning project that predicts **cardiovascular health risk** using patient data. The model is built using Logistic Regression and trained on a synthetic health dataset. Includes a standalone web dashboard for visual analysis and real-time predictions.
 
 ---
