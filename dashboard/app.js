@@ -1,9 +1,27 @@
+// ─── Sidebar Toggle (mobile) ─────────────────────────────────────────
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const hamburger = document.getElementById('hamburger');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active', isOpen);
+    hamburger.classList.toggle('open', isOpen);
+}
+
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('hamburger').classList.remove('open');
+}
+
 // ─── Page Navigation ────────────────────────────────────────────────
 function showPage(id, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
     el.classList.add('active');
+    // Auto-close sidebar on mobile after navigation
+    if (window.innerWidth <= 768) closeSidebar();
 }
 
 // ─── Animated KPI Counter ────────────────────────────────────────────
