@@ -12,7 +12,7 @@ pinned: false
 
 **Live Demo:** [huggingface.co/spaces/lakshyalamba/cardiorisk-ai](https://huggingface.co/spaces/lakshyalamba/cardiorisk-ai)
 
-A machine learning project that predicts **cardiovascular health risk** using patient data. Built with Logistic Regression trained on 400 synthetic patient records. Features a Streamlit dashboard for interactive analysis and real-time predictions.
+A machine learning project that predicts **cardiovascular health risk** using patient data. Built with Logistic Regression trained on 9,500 synthetic patient records (10,000 raw, cleaned). Features a Streamlit dashboard for interactive analysis and real-time predictions.
 
 ---
 
@@ -22,7 +22,7 @@ A machine learning project that predicts **cardiovascular health risk** using pa
 genai capstone/
 ├── Capstone.ipynb        # EDA + model training notebook
 ├── data/
-│   └── synthetic_health.csv  # Dataset (400 records, 11 features)
+│   └── synthetic_health.csv  # Dataset (10,000 records, 11 columns)
 ├── dashboard/
 │   ├── app.py            # Streamlit dashboard (3 pages)
 │   └── requirements.txt  # Python dependencies
@@ -35,8 +35,8 @@ genai capstone/
 
 | Page | What it shows |
 |---|---|
-| **KPI Dashboard** | Accuracy (92.5%), Precision (92%), Recall (93%), F1 (92%), AUC-ROC (89%) cards + dataset stats + distribution charts |
-| **Visual Analysis** | ROC Curve (AUC=0.89), Confusion Matrix heatmap, Logistic Regression Feature Weights |
+| **KPI Dashboard** | Accuracy (91.16%), Precision (91%), Recall (91%), F1 (91%), AUC-ROC (96.68%) cards + dataset stats + distribution charts |
+| **Visual Analysis** | ROC Curve (AUC=0.97), Confusion Matrix heatmap, Logistic Regression Feature Weights |
 | **Prediction System** | Patient input form → real-time risk score gauge + key risk indicators |
 
 ---
@@ -45,17 +45,17 @@ genai capstone/
 
 | Metric | Value |
 |---|---|
-| Accuracy | **92.5%** |
-| Precision | **92%** |
-| Recall | **93%** |
-| F1 Score | **92%** |
-| AUC-ROC | **0.89** |
+| Accuracy | **91.16%** |
+| Precision | **91%** (weighted avg) |
+| Recall | **91%** (weighted avg) |
+| F1 Score | **91%** (weighted avg) |
+| AUC-ROC | **0.97** |
 
 ---
 
 ## Dataset
 
-**File:** `data/synthetic_health.csv` · **400 rows** · **11 columns**
+**File:** `data/synthetic_health.csv` · **10,000 rows** (9,500 after cleaning) · **11 columns**
 
 | Feature | Type |
 |---|---|
