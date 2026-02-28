@@ -233,11 +233,11 @@ st.markdown("""
 
 # ── Constants / Model Metrics ─────────────────────────────────────────────────
 METRICS = {
-    "Accuracy": (92.50, "#4f8ef7", "Correct predictions out of all"),
-    "Precision": (92.00, "#7c5ff7", "True positives / predicted positives"),
-    "Recall": (93.00, "#22c55e", "True positives / actual positives"),
-    "F1 Score": (92.00, "#f59e0b", "Harmonic mean of precision & recall"),
-    "AUC-ROC": (89.00, "#ec4899", "Area Under the ROC Curve"),
+    "Accuracy": (91.16, "#4f8ef7", "Correct predictions out of all"),
+    "Precision": (91.00, "#7c5ff7", "Weighted avg — true pos / pred pos"),
+    "Recall": (91.00, "#22c55e", "Weighted avg — true pos / actual pos"),
+    "F1 Score": (91.00, "#f59e0b", "Harmonic mean of precision & recall"),
+    "AUC-ROC": (96.68, "#ec4899", "Area Under the ROC Curve"),
 }
 
 PLOTLY_LIGHT = dict(
@@ -277,7 +277,7 @@ with st.sidebar:
       </div>
       <div class="sidebar-info-row">
         <span class="sinfo-label">Records</span>
-        <span class="sinfo-val">400</span>
+        <span class="sinfo-val">9,500</span>
       </div>
       <div class="sidebar-info-row">
         <span class="sinfo-label">Features</span>
@@ -297,7 +297,7 @@ with st.sidebar:
 if page == "KPI Dashboard":
     st.markdown("""
     <div class="page-title">KPI Dashboard <span class="badge badge-green">Model Trained</span></div>
-    <div class="page-sub">Key performance metrics from the Logistic Regression model trained on synthetic health data</div>
+    <div class="page-sub">Key performance metrics from the Logistic Regression model trained on 9,500 synthetic health records</div>
     """, unsafe_allow_html=True)
 
     # ── Model Performance Cards ───────────────────────────────────────────────
@@ -308,7 +308,7 @@ if page == "KPI Dashboard":
             st.markdown(f"""
             <div class="kpi-card">
               <div class="kpi-label">{name}</div>
-              <div class="kpi-value" style="color:{color}">{val:.0f}%</div>
+              <div class="kpi-value" style="color:{color}">{val:.1f}%</div>
               <div class="kpi-sub">{sub}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -319,10 +319,11 @@ if page == "KPI Dashboard":
     st.markdown('<div class="section-div">Dataset Overview</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="stat-row">
-      <div class="stat-mini"><div class="stat-num">400</div><div class="stat-lbl">Total Records</div></div>
+      <div class="stat-mini"><div class="stat-num">9,500</div><div class="stat-lbl">Total Records</div></div>
       <div class="stat-mini"><div class="stat-num">10</div><div class="stat-lbl">Features Used</div></div>
       <div class="stat-mini"><div class="stat-num">80/20</div><div class="stat-lbl">Train / Test Split</div></div>
-      <div class="stat-mini"><div class="stat-num">320</div><div class="stat-lbl">Training Samples</div></div>
+      <div class="stat-mini"><div class="stat-num">7,600</div><div class="stat-lbl">Training Samples</div></div>
+      <div class="stat-mini"><div class="stat-num">1,900</div><div class="stat-lbl">Test Samples</div></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -335,7 +336,7 @@ if page == "KPI Dashboard":
         st.caption("Proportion of high-risk vs low-risk patients in dataset")
         fig_dist = go.Figure(go.Pie(
             labels=["High Risk (1)", "Low Risk (0)"],
-            values=[206, 194],
+            values=[7165, 2335],
             hole=0.65,
             marker=dict(
                 colors=["rgba(239,68,68,0.85)", "rgba(34,197,94,0.85)"],
@@ -378,14 +379,14 @@ elif page == "Visual Analysis":
     # ── ROC Curve ─────────────────────────────────────────────────────────────
     st.markdown('<div class="section-div">ROC Curve</div>', unsafe_allow_html=True)
     st.markdown("**Receiver Operating Characteristic (ROC) Curve**")
-    st.caption("Shows tradeoff between True Positive Rate and False Positive Rate — AUC = 0.89")
+    st.caption("Shows tradeoff between True Positive Rate and False Positive Rate — AUC = 0.97")
 
-    fpr = [0, 0.02, 0.05, 0.08, 0.12, 0.16, 0.20, 0.25, 0.30, 0.38, 0.45, 0.55, 0.65, 0.75, 0.85, 0.92, 1.0]
-    tpr = [0, 0.28, 0.48, 0.60, 0.70, 0.76, 0.81, 0.85, 0.88, 0.90, 0.92, 0.94, 0.96, 0.97, 0.98, 0.99, 1.0]
+    fpr = [0.0, 0.015, 0.034, 0.051, 0.069, 0.086, 0.116, 0.137, 0.167, 0.191, 0.214, 0.251, 0.298, 0.368, 0.415, 0.507, 1.0]
+    tpr = [0.0, 0.761, 0.789, 0.825, 0.861, 0.881, 0.896, 0.918, 0.932, 0.941, 0.954, 0.965, 0.973, 0.980, 0.986, 0.993, 1.0]
 
     fig_roc = go.Figure()
     fig_roc.add_trace(go.Scatter(
-        x=fpr, y=tpr, mode="lines+markers", name="ROC Curve (AUC = 0.89)",
+        x=fpr, y=tpr, mode="lines+markers", name="ROC Curve (AUC = 0.97)",
         line=dict(color="#4f8ef7", width=3),
         marker=dict(size=5, color="#4f8ef7"),
         fill="tozeroy", fillcolor="rgba(79,142,247,0.08)",
@@ -410,10 +411,10 @@ elif page == "Visual Analysis":
 
     with c1:
         st.markdown("**Confusion Matrix**")
-        st.caption("Predicted vs actual outcomes on 80 test samples")
-        # Values: TN=12, FP=5, FN=1, TP=62
-        z = [[12, 5], [1, 62]]
-        text = [["TN: 12", "FP: 5"], ["FN: 1", "TP: 62"]]
+        st.caption("Predicted vs actual outcomes on 1,900 test samples")
+        # Values: TN=361, FP=106, FN=62, TP=1371
+        z = [[361, 106], [62, 1371]]
+        text = [["TN: 361", "FP: 106"], ["FN: 62", "TP: 1371"]]
         fig_cm = go.Figure(go.Heatmap(
             z=z,
             x=["No Risk (0)", "At Risk (1)"],
@@ -426,13 +427,13 @@ elif page == "Visual Analysis":
                 [0.5, "rgba(34,197,94,0.5)"],
                 [1.0, "rgba(34,197,94,0.85)"],
             ],
-            zmin=0, zmax=62,
+            zmin=0, zmax=1371,
             showscale=False,
             hovertemplate="Actual: %{y}<br>Predicted: %{x}<br>Count: %{z}<extra></extra>",
         ))
         # Highlight error cells differently
         fig_cm.add_trace(go.Heatmap(
-            z=[[0, 5], [1, 0]],
+            z=[[0, 106], [62, 0]],
             x=["No Risk (0)", "At Risk (1)"],
             y=["No Risk (0)", "At Risk (1)"],
             colorscale=[
@@ -453,10 +454,11 @@ elif page == "Visual Analysis":
         st.markdown("**Logistic Regression — Feature Weights**")
         st.caption("Coefficient magnitudes showing each feature's influence on risk prediction")
         features = [
-            "Sex (Male)", "Max HR", "BMI", "Diabetes", "Cholesterol",
-            "Smoker", "Systolic BP", "Age", "Exercise Angina", "Chest Pain (Typical)"
+            "Max HR", "Sex (Male)", "BMI", "Chest Pain (Non-Anginal)",
+            "Exercise Angina", "Chest Pain (Atypical)", "Chest Pain (Typical)",
+            "Cholesterol", "Systolic BP", "Age", "Diabetes", "Smoker"
         ]
-        coefficients = [-0.28, -0.56, 0.31, 0.48, 0.54, 0.62, 0.73, 0.85, 1.18, 1.42]
+        coefficients = [-0.002, 0.020, -0.020, -0.035, -0.111, -0.157, -0.202, 1.728, 1.834, 1.950, 4.388, 4.439]
         colors = ["rgba(239,68,68,0.8)" if v > 0 else "rgba(34,197,94,0.8)" for v in coefficients]
 
         fig_coef = go.Figure(go.Bar(
@@ -547,19 +549,19 @@ else:
             else:
                 # ── Logistic Regression Score ─────────────────────────────
                 logit = -2.8
-                logit += 0.85 * ((age  - 55)  / 14)
-                logit += 0.73 * ((sbp  - 135) / 25)
-                logit += 0.54 * ((chol - 225) / 43)
-                logit += 0.31 * ((bmi  - 29)  / 6.4)
-                logit -= 0.56 * ((hr   - 145) / 32)
+                logit += 1.950 * ((age  - 55)  / 14)
+                logit += 1.834 * ((sbp  - 135) / 25)
+                logit += 1.728 * ((chol - 225) / 43)
+                logit -= 0.020 * ((bmi  - 29)  / 6.4)
+                logit -= 0.002 * ((hr   - 145) / 32)
 
-                cp_map = {"Typical Angina": 1.42, "Atypical Angina": 0.60,
-                          "Non-Anginal": 0.0, "Asymptomatic": 0.30}
+                cp_map = {"Typical Angina": -0.202, "Atypical Angina": -0.157,
+                          "Non-Anginal": -0.035, "Asymptomatic": 0.0}
                 logit += cp_map.get(cp, 0)
-                if angina == "Yes": logit += 1.18
-                if smoker == "Yes": logit += 0.62
-                if diab   == "Yes": logit += 0.48
-                if sex    == "Male": logit -= 0.28
+                if angina == "Yes": logit -= 0.111
+                if smoker == "Yes": logit += 4.439
+                if diab   == "Yes": logit += 4.388
+                if sex    == "Male": logit += 0.020
 
                 prob = round((1 / (1 + math.exp(-logit))) * 100)
                 score = max(2, min(98, prob))
