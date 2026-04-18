@@ -1,0 +1,48 @@
+{
+  "categorical_features": [
+    "sex",
+    "chest_pain",
+    "smoker",
+    "diabetes",
+    "exercise_angina"
+  ],
+  "numeric_features": [
+    "age",
+    "systolic_bp",
+    "cholesterol",
+    "max_heart_rate",
+    "bmi"
+  ],
+  "selected_feature_columns": [
+    "age",
+    "systolic_bp",
+    "cholesterol",
+    "max_heart_rate",
+    "bmi",
+    "sex",
+    "chest_pain",
+    "smoker",
+    "diabetes",
+    "exercise_angina"
+  ],
+  "target_column": "risk",
+  "transformed_feature_columns": [
+    "numeric__age",
+    "numeric__systolic_bp",
+    "numeric__cholesterol",
+    "numeric__max_heart_rate",
+    "numeric__bmi",
+    "categorical__sex_Female",
+    "categorical__sex_Male",
+    "categorical__chest_pain_asymptomatic",
+    "categorical__chest_pain_atypical",
+    "categorical__chest_pain_non-anginal",
+    "categorical__chest_pain_typical",
+    "categorical__smoker_No",
+    "categorical__smoker_Yes",
+    "categorical__diabetes_No",
+    "categorical__diabetes_Yes",
+    "categorical__exercise_angina_No",
+    "categorical__exercise_angina_Yes"
+  ]
+}

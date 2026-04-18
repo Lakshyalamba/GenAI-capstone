@@ -1,0 +1,32 @@
+{
+  "clean_rows": 9500,
+  "cleaning_report": {
+    "duplicates_removed": 0,
+    "final_rows": 9500,
+    "invalid_category_rows_removed": 0,
+    "missing_feature_counts_after_cleaning": {
+      "age": 476,
+      "bmi": 477,
+      "chest_pain": 0,
+      "cholesterol": 474,
+      "diabetes": 0,
+      "exercise_angina": 0,
+      "max_heart_rate": 478,
+      "sex": 0,
+      "smoker": 0,
+      "systolic_bp": 473
+    },
+    "original_rows": 10000,
+    "rows_missing_target_removed": 500,
+    "target_distribution": {
+      "0": 2335,
+      "1": 7165
+    }
+  },
+  "model_name": "LogisticRegression",
+  "processed_dataset_path": "/Users/lakshya./My Projects/GenAI_Capstone/GenAI-capstone/data/processed/cardio_clean.csv",
+  "raw_rows": 10000,
+  "test_rows": 1900,
+  "train_rows": 7600,
+  "trained_at_utc": "2026-04-18T19:11:17.365643+00:00"
+}
