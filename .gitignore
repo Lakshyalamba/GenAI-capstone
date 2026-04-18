@@ -1,52 +1,16 @@
-# ── Python ──────────────────────────────────
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.egg
-*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.playwright-cli/
+.DS_Store
+.streamlit/secrets.toml
+.env
+.env.*
+.venv/
+venv/
 dist/
 build/
-eggs/
-*.whl
-
-# ── Virtual environments ────────────────────
-venv/
-env/
-.venv/
-.env/
-
-# ── Jupyter Notebook ────────────────────────
-.ipynb_checkpoints/
-
-# ── IDE / Editor ────────────────────────────
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# ── OS files ────────────────────────────────
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ── LaTeX build artifacts ───────────────────
-Reports/*.aux
-Reports/*.log
-Reports/*.out
-Reports/*.toc
-Reports/*.synctex.gz
-Reports/*.fls
-Reports/*.fdb_latexmk
-Reports/*.bbl
-Reports/*.blg
-
-# ── Streamlit ───────────────────────────────
-.streamlit/
-
-# ── Misc ────────────────────────────────────
-*.pkl
-*.joblib
-*.h5
-*.log
+*.egg-info/
+*.pyc
+*.pyo
+*.tmp
