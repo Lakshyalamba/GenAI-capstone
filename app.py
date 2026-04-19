@@ -900,31 +900,198 @@ def render_model_dashboard(
     st.markdown(
         build_page_header(
             "Key Performance Analytics",
-            "The redesigned shell is in place. Dashboard analytics are being layered in next.",
+            "Review the structural accuracy, ROC-AUC distributions, and predictive health summaries computed against the core patient dataset.",
             bundle,
-            bundle_error,
+            bundle_error
         ),
         unsafe_allow_html=True,
     )
-    render_panel_open()
-    st.info("Dashboard analytics will be added in the next commit.")
-    render_panel_close()
 
-def render_eda_tab(
-    dataset: pd.DataFrame, bundle: dict[str, Any] | None, bundle_error: str | None
-) -> None:
+    if bundle_error or bundle is None:
+        st.error(bundle_error or "Model artifacts are not available.")
+        st.code("python train.py")
+        return
+
+    summary = summarize_dataset(dataset)
+    metrics = bundle["evaluation"]["metrics"]
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    top_metrics = st.columns(4)
+    metric_specs = [
+        ("Accuracy", format_percent(metrics["accuracy"]), "Hold-out test set"),
+        ("ROC-AUC", format_percent(metrics["roc_auc"]), "Probability discrimination"),
+        ("Clean records", f"{summary['records']:,}", "Processed patients"),
+        ("Positive rate", f"{summary['positive_rate']:.1%}", "Higher-risk share"),
+    ]
+    for column, spec in zip(top_metrics, metric_specs, strict=False):
+        with column:
+            render_metric_tile(*spec)
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+
+    info_columns = st.columns([0.65, 0.35])
+    with info_columns[0]:
+        render_panel_open()
+        st.markdown(
+            '<div class="section-kicker" style="margin-top:0;">Evaluation Summary</div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            build_evaluation_table(bundle, dataset),
+            use_container_width=True,
+            hide_index=True,
+        )
+        render_panel_close()
+    with info_columns[1]:
+        render_panel_open()
+        st.plotly_chart(build_roc_chart(bundle["evaluation"]), use_container_width=True)
+        render_panel_close()
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    chart_columns = st.columns(3)
+    with chart_columns[0]:
+        render_panel_open()
+        st.plotly_chart(
+            build_confusion_chart(bundle["evaluation"]), use_container_width=True
+        )
+        render_panel_close()
+    with chart_columns[1]:
+        render_panel_open()
+        st.plotly_chart(
+            build_risk_distribution_chart(dataset), use_container_width=True
+        )
+        render_panel_close()
+    with chart_columns[2]:
+        render_panel_open()
+        st.markdown(
+            '<div class="section-kicker" style="margin-top:0;">Runtime Notes</div>',
+            unsafe_allow_html=True,
+        )
+        st.write("- Training and Streamlit runtime are separated.")
+        st.write("- The app loads artifacts from `models/` without retraining.")
+        st.write(
+            "- Agent responses are retrieval-grounded before recommendations are generated."
+        )
+        st.write("- The model expects validated cardiovascular profile inputs only.")
+        render_panel_close()
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    lower_columns = st.columns([0.5, 0.5])
+    with lower_columns[0]:
+        render_panel_open()
+        st.plotly_chart(
+            build_coefficient_chart(bundle["evaluation"]), use_container_width=True
+        )
+        render_panel_close()
+    with lower_columns[1]:
+        render_panel_open()
+        st.plotly_chart(build_dataset_profile_chart(dataset), use_container_width=True)
+        render_panel_close()
+
+
+def render_eda_tab(dataset: pd.DataFrame, bundle: dict[str, Any] | None, bundle_error: str | None) -> None:
     st.markdown(
         build_page_header(
             "Cohort Data Explorer",
-            "The updated EDA workspace will be added in the next commit.",
+            "Exploratory data analysis showcasing feature distributions, anomalies, and metric interactions across cardiovascular risk boundaries.",
             bundle,
-            bundle_error,
+            bundle_error
         ),
         unsafe_allow_html=True,
     )
+
+    st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
     render_panel_open()
-    st.info("EDA charts are staged for the next commit.")
+    selector_columns = st.columns([0.4, 0.6])
+    with selector_columns[0]:
+        numeric_feature = st.selectbox(
+            "Inspect localized numeric feature distributions",
+            options=NUMERIC_FEATURES,
+            format_func=lambda feature: FEATURE_METADATA[feature]["label"],
+        )
     render_panel_close()
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    chart_columns = st.columns(2)
+    with chart_columns[0]:
+        render_panel_open()
+        figure = px.histogram(
+            dataset,
+            x=numeric_feature,
+            color="risk_label",
+            barmode="overlay",
+            nbins=28,
+            color_discrete_map={"Lower risk": "#60a5fa", "Higher risk": "#ef4444"},
+            title=f"{FEATURE_METADATA[numeric_feature]['label']} Distribution",
+        )
+        st.plotly_chart(apply_plot_style(figure), use_container_width=True)
+        render_panel_close()
+    with chart_columns[1]:
+        render_panel_open()
+        figure = px.box(
+            dataset,
+            x="risk_label",
+            y="cholesterol",
+            color="risk_label",
+            color_discrete_map={"Lower risk": "#60a5fa", "Higher risk": "#ef4444"},
+            title="Cholesterol by Risk Label",
+        )
+        figure.update_layout(showlegend=False)
+        st.plotly_chart(apply_plot_style(figure), use_container_width=True)
+        render_panel_close()
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    lower_columns = st.columns(2)
+    with lower_columns[0]:
+        render_panel_open()
+        smoker_breakdown = (
+            dataset.groupby(["risk_label", "smoker"]).size().reset_index(name="count")
+        )
+        figure = px.bar(
+            smoker_breakdown,
+            x="risk_label",
+            y="count",
+            color="smoker",
+            barmode="group",
+            color_discrete_map={"Yes": "#ef4444", "No": "#60a5fa"},
+            title="Smoking Status by Risk Group",
+        )
+        st.plotly_chart(apply_plot_style(figure), use_container_width=True)
+        render_panel_close()
+    with lower_columns[1]:
+        render_panel_open()
+        scatter_frame = dataset.copy()
+        scatter_frame["bmi_marker"] = scatter_frame["bmi"].fillna(
+            scatter_frame["bmi"].median()
+        )
+        scatter_frame = scatter_frame.dropna(
+            subset=["systolic_bp", "cholesterol", "risk_label"]
+        )
+        figure = px.scatter(
+            scatter_frame,
+            x="systolic_bp",
+            y="cholesterol",
+            color="risk_label",
+            size="bmi_marker",
+            opacity=0.55,
+            color_discrete_map={"Lower risk": "#60a5fa", "Higher risk": "#ef4444"},
+            title="Blood Pressure vs Cholesterol",
+        )
+        st.plotly_chart(apply_plot_style(figure), use_container_width=True)
+        render_panel_close()
+
+    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+    render_panel_open()
+    correlation = dataset[NUMERIC_FEATURES + ["risk"]].corr(numeric_only=True)
+    heatmap = px.imshow(
+        correlation,
+        text_auto=".2f",
+        aspect="auto",
+        color_continuous_scale="Blues",
+        title="Feature Correlation Heatmap",
+    )
+    st.plotly_chart(apply_plot_style(heatmap, height=430), use_container_width=True)
+    render_panel_close()
+
 
 def render_patient_input_fields(
     prefix: str, defaults: dict[str, Any] | None = None
