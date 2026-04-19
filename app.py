@@ -1232,15 +1232,112 @@ def render_batch_scoring_tab(
     st.markdown(
         build_page_header(
             "Batch Inference Payload",
-            "Batch scoring will be wired into the redesigned UI in the next commit.",
+            "Execute asynchronous pipeline scoring against multi-patient CSV payloads using the trained production model artifacts.",
             bundle,
-            bundle_error,
+            bundle_error
         ),
         unsafe_allow_html=True,
     )
+
+    if bundle_error or bundle is None:
+        st.error(bundle_error or "Model artifacts are not available.")
+        return
+
     render_panel_open()
-    st.info("Batch CSV scoring is staged for the next commit.")
+    st.markdown('<div class="section-kicker" style="margin-top:0;">Data Payload Ingestion</div>', unsafe_allow_html=True)
+    
+    schema_html = " ".join([f"<span style='display:inline-block; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:0.25rem 0.55rem; margin:0.15rem; font-size:0.8rem; font-family:monospace; color:#0f283d; font-weight:500;'>{c}</span>" for c in FEATURE_COLUMNS])
+    st.markdown(
+        f"""
+        <div style="margin-bottom: 2rem;">
+            <p style="font-size:0.95rem; color:#475569; margin-bottom:1rem; line-height:1.5;">Establish secure bulk processing by uploading patient demographics and lab values. The engine statically expects the following exact schema properties:</p>
+            <div>{schema_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    template_csv = dataset[FEATURE_COLUMNS].head(12).to_csv(index=False).encode("utf-8")
+    
+    uploaded_file = st.file_uploader(
+        "Upload patient data CSV", type=["csv"], key="batch_file_uploader", label_visibility="collapsed"
+    )
+
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+    action_cols = st.columns(2)
+    with action_cols[0]:
+        st.download_button(
+            "Download Validation Schema (.csv)",
+            data=template_csv,
+            file_name="cardio_batch_template.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    with action_cols[1]:
+        score_clicked = st.button("Execute Model Inference", use_container_width=True, type="primary")
+
     render_panel_close()
+
+    if score_clicked:
+        if uploaded_file is None:
+            st.warning("Upload a CSV file first.")
+        else:
+            try:
+                input_df = pd.read_csv(uploaded_file)
+                scored_df = predict_batch(input_df, bundle=bundle)
+                st.session_state["batch_scored_df"] = scored_df
+                st.success(
+                    f"Scored {len(scored_df)} patient rows. "
+                    f"Flagged {(scored_df['risk_category'] == 'High').sum()} as high risk."
+                )
+            except Exception as exc:
+                st.error(f"CSV scoring failed: {exc}")
+
+    scored_df = st.session_state.get("batch_scored_df")
+    if scored_df is None:
+        st.markdown(
+            """
+            <div style="text-align:center; padding: 5rem 2rem; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; margin-top:1.5rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02)">
+                <div style="display:inline-block; padding: 1rem; background: #f8fafc; border-radius: 50%; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                    <span class="material-symbols-outlined" style="font-size: 2.5rem; color: #94a3b8; display: block; line-height: 1;">analytics</span>
+                </div>
+                <h3 style="margin:0 0 0.5rem 0; font-size:1.15rem; color:#0f283d; font-family:'Inter', sans-serif;">Inference Pipeline Idle</h3>
+                <p style="color:#64748b; font-size: 0.95rem; margin:0;">Upload a validated clinical cohort payload via the ingestion module above to compute aggregate predictions.</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+        summary_columns = st.columns(3)
+        with summary_columns[0]:
+            render_metric_tile(
+                "Rows scored", f"{len(scored_df):,}", "Uploaded patient profiles"
+            )
+        with summary_columns[1]:
+            render_metric_tile(
+                "High risk",
+                f"{(scored_df['risk_category'] == 'High').sum():,}",
+                "Profiles above the high-risk threshold",
+            )
+        with summary_columns[2]:
+            render_metric_tile(
+                "Average probability",
+                f"{scored_df['probability'].mean():.1%}",
+                "Batch-level mean risk score",
+            )
+
+        st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
+        st.dataframe(scored_df, use_container_width=True, hide_index=True)
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+        st.download_button(
+            "Download Secure Results Payload",
+            data=scored_df.to_csv(index=False).encode("utf-8"),
+            file_name="cardio_batch_predictions.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
 
 def render_agentic_health_tab(
     bundle: dict[str, Any] | None, bundle_error: str | None
