@@ -614,6 +614,7 @@ def apply_plot_style(figure: go.Figure, height: int = 360) -> go.Figure:
     return figure
 
 
+@st.cache_data(show_spinner=False)
 def build_risk_gauge(probability: float, risk_category: str) -> go.Figure:
     gauge_colors = {
         "Low": "#22c55e",
@@ -789,6 +790,7 @@ def build_evaluation_table(
     return pd.DataFrame(rows)
 
 
+@st.cache_data(show_spinner=False)
 def build_dataset_profile_chart(dataset: pd.DataFrame) -> go.Figure:
     summary = pd.DataFrame(
         {
@@ -814,6 +816,7 @@ def build_dataset_profile_chart(dataset: pd.DataFrame) -> go.Figure:
     return apply_plot_style(figure)
 
 
+@st.cache_data(show_spinner=False)
 def build_roc_chart(evaluation: dict[str, Any]) -> go.Figure:
     metrics = evaluation["metrics"]
     roc_data = evaluation["roc_curve"]
@@ -844,6 +847,7 @@ def build_roc_chart(evaluation: dict[str, Any]) -> go.Figure:
     return apply_plot_style(figure)
 
 
+@st.cache_data(show_spinner=False)
 def build_confusion_chart(evaluation: dict[str, Any]) -> go.Figure:
     figure = px.imshow(
         evaluation["confusion_matrix"],
@@ -856,6 +860,7 @@ def build_confusion_chart(evaluation: dict[str, Any]) -> go.Figure:
     return apply_plot_style(figure)
 
 
+@st.cache_data(show_spinner=False)
 def build_coefficient_chart(evaluation: dict[str, Any]) -> go.Figure:
     coefficients = pd.DataFrame(evaluation["coefficients"]["all_coefficients"])
     coefficients["label"] = coefficients["feature"].map(pretty_transformed_feature)
@@ -875,6 +880,7 @@ def build_coefficient_chart(evaluation: dict[str, Any]) -> go.Figure:
     return apply_plot_style(figure, height=460)
 
 
+@st.cache_data(show_spinner=False)
 def build_risk_distribution_chart(dataset: pd.DataFrame) -> go.Figure:
     risk_distribution = (
         dataset["risk_label"]
@@ -1496,16 +1502,6 @@ def main() -> None:
     )
     inject_styles()
 
-    dataset = get_dashboard_dataset()
-
-    bundle: dict[str, Any] | None
-    bundle_error: str | None = None
-    try:
-        bundle = get_model_bundle()
-    except FileNotFoundError as exc:
-        bundle = None
-        bundle_error = str(exc)
-
     st.sidebar.markdown(
         f'''
         <div class="sidebar-brand">
@@ -1532,6 +1528,19 @@ def main() -> None:
     )
     
     page = NAV_OPTIONS[selected_nav]
+
+    # Lazy-load data only for the active page
+    dataset = None
+    bundle = None
+    bundle_error = None
+    
+    if page in ["Model Dashboard", "Exploratory Data Analysis", "Batch CSV Scoring"]:
+        dataset = get_dashboard_dataset()
+        
+    try:
+        bundle = get_model_bundle()
+    except FileNotFoundError as exc:
+        bundle_error = str(exc)
 
     if page == "Model Dashboard":
         render_model_dashboard(dataset, bundle, bundle_error)

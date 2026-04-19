@@ -159,15 +159,20 @@ def _rule_based_recommendations(state: dict[str, Any]) -> list[str]:
     return deduplicated[:6]
 
 
+import streamlit as st
+
+@st.cache_resource(show_spinner=False)
+def _get_genai_client():
+    from google import genai
+    return genai.Client()
+
 def _call_optional_llm(prompt: str) -> str | None:
     config = get_agent_config()
     if not config.llm_enabled:
         return None
 
     try:
-        from google import genai
-
-        client = genai.Client()
+        client = _get_genai_client()
         response = client.models.generate_content(
             model=config.model_name,
             contents=f"{CARDIO_SYSTEM_PROMPT}\n\n{prompt}",

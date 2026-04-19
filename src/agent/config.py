@@ -59,6 +59,9 @@ def get_agent_config() -> AgentConfig:
     )
 
 
+import streamlit as st
+
+@st.cache_data(show_spinner=False)
 def validate_agent_config() -> dict[str, object]:
     """Return a UI-friendly status payload for agent startup checks."""
     config = get_agent_config()
