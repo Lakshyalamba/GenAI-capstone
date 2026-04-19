@@ -56,13 +56,31 @@ def humanize_slug(value: str) -> str:
     return value.replace("_", " ").replace("-", " ").strip().title()
 
 
+def read_runtime_secret(name: str) -> str | None:
+    """Read a runtime secret from env vars first, then Streamlit secrets when available."""
+    env_value = os.getenv(name)
+    if env_value:
+        return env_value
+
+    try:
+        import streamlit as st
+
+        if name in st.secrets:
+            value = st.secrets[name]
+            return str(value) if value else None
+    except Exception:
+        return None
+
+    return None
+
+
 def get_env_status() -> dict[str, Any]:
     """Expose runtime environment details for the UI and diagnostics."""
     return {
         "python_version": platform.python_version(),
         "platform": platform.platform(),
-        "openai_api_key_present": bool(os.getenv("OPENAI_API_KEY")),
-        "agent_model": os.getenv("CARDIO_AGENT_MODEL", "gpt-4.1-mini"),
+        "gemini_api_key_present": bool(read_runtime_secret("GEMINI_API_KEY")),
+        "agent_model": read_runtime_secret("CARDIO_AGENT_MODEL") or "gemini-2.5-flash",
         "app_env": os.getenv("APP_ENV", "local"),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "project_root": str(PROJECT_ROOT),

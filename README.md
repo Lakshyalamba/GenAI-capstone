@@ -134,14 +134,14 @@ Workflow nodes:
 - `validate_output`
 - `answer_follow_up`
 
-The workflow first scores the patient, then retrieves relevant markdown guidance from the local knowledge base, then produces a validated cardiovascular guidance response. If `OPENAI_API_KEY` is available and the `openai` package is installed, the app can optionally refine the grounded response with an LLM. If not, it falls back gracefully to a grounded rule-based mode.
+The workflow first scores the patient, then retrieves relevant markdown guidance from the local knowledge base, then produces a validated cardiovascular guidance response. If `GEMINI_API_KEY` is available and the `google-genai` package is installed, the app can optionally refine the grounded response with Gemini Flash. If not, it falls back gracefully to a grounded rule-based mode.
 
 ## Environment and Secrets
 
 Optional LLM enhancement uses:
 
-- `OPENAI_API_KEY`
-- `CARDIO_AGENT_MODEL` (optional, defaults to `gpt-4.1-mini`)
+- `GEMINI_API_KEY`
+- `CARDIO_AGENT_MODEL` (optional, defaults to `gemini-2.5-flash`)
 - `APP_ENV` (optional, defaults to `local`)
 
 If the API key is missing, the UI explicitly reports that the assistant is running in grounded fallback mode.

@@ -165,18 +165,14 @@ def _call_optional_llm(prompt: str) -> str | None:
         return None
 
     try:
-        from openai import OpenAI
+        from google import genai
 
-        client = OpenAI()
-        response = client.responses.create(
+        client = genai.Client()
+        response = client.models.generate_content(
             model=config.model_name,
-            input=[
-                {"role": "system", "content": CARDIO_SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.2,
+            contents=f"{CARDIO_SYSTEM_PROMPT}\n\n{prompt}",
         )
-        return response.output_text.strip()
+        return (response.text or "").strip() or None
     except Exception:
         return None
 
