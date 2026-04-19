@@ -1184,15 +1184,47 @@ def render_single_prediction_tab(
     st.markdown(
         build_page_header(
             "Patient Profiling",
-            "The new prediction workspace will be enabled in the next commit.",
+            "Input physiological clinical measurements alongside known risk factors to generate real-time predictive cardiovascular scoring.",
             bundle,
-            bundle_error,
+            bundle_error
         ),
         unsafe_allow_html=True,
     )
-    render_panel_open()
-    st.info("Single-patient prediction controls are staged for the next commit.")
-    render_panel_close()
+
+    if bundle_error or bundle is None:
+        st.error(bundle_error or "Model artifacts are not available.")
+        return
+
+    form_column, output_column = st.columns([1.05, 0.95])
+    with form_column:
+        defaults = st.session_state.get(
+            "single_patient_profile", default_patient_profile()
+        )
+        with st.form("single_prediction_form"):
+            patient = render_patient_input_fields("single", defaults=defaults)
+            st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+            submitted = st.form_submit_button(
+                "Calculate Cardiovascular Risk", use_container_width=True, type="primary"
+            )
+        if submitted:
+            try:
+                result = predict_single(patient, bundle=bundle)
+                st.session_state["single_patient_profile"] = result["validated_input"]
+                st.session_state["single_prediction_result"] = result
+                st.success("Prediction completed.")
+            except ValueError as exc:
+                st.error(str(exc))
+
+    with output_column:
+        result = st.session_state.get("single_prediction_result")
+        patient = st.session_state.get(
+            "single_patient_profile", default_patient_profile()
+        )
+        if not result:
+            st.info("Submit the form to calculate risk for a patient profile.")
+        else:
+            render_prediction_result(result, patient)
+
 
 def render_batch_scoring_tab(
     bundle: dict[str, Any] | None, bundle_error: str | None, dataset: pd.DataFrame
