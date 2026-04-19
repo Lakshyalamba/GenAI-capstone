@@ -10,6 +10,7 @@ def test_agent_config_without_api_key(monkeypatch) -> None:
     assert status["api_key_present"] is False
     assert status["status"] == "fallback_only"
     assert status["fallback_available"] is True
+    assert "vectorstore" in status
 
 
 def test_agent_config_with_api_key_is_consistent(monkeypatch) -> None:
@@ -19,3 +20,4 @@ def test_agent_config_with_api_key_is_consistent(monkeypatch) -> None:
     assert status["llm_enabled"] is status["sdk_package_available"]
     expected_status = "llm_enabled" if status["sdk_package_available"] else "fallback_only"
     assert status["status"] == expected_status
+    assert status["vectorstore"]["backend"] == "chroma"

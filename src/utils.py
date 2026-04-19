@@ -12,13 +12,21 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
+VECTORSTORE_DIR = DATA_DIR / "vectorstore"
 MODELS_DIR = PROJECT_ROOT / "models"
 KNOWLEDGE_BASE_DIR = PROJECT_ROOT / "knowledge_base"
 
 
 def ensure_project_directories() -> None:
     """Create the runtime directories expected by the project."""
-    for path in (DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, MODELS_DIR, KNOWLEDGE_BASE_DIR):
+    for path in (
+        DATA_DIR,
+        RAW_DATA_DIR,
+        PROCESSED_DATA_DIR,
+        VECTORSTORE_DIR,
+        MODELS_DIR,
+        KNOWLEDGE_BASE_DIR,
+    ):
         path.mkdir(parents=True, exist_ok=True)
 
 

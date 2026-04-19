@@ -136,17 +136,18 @@ def select_model_features(frame: pd.DataFrame) -> pd.DataFrame:
     return frame[FEATURE_COLUMNS].copy()
 
 
-def coerce_and_validate_patient_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate and normalize a single patient payload."""
-    missing_fields = [field for field in FEATURE_COLUMNS if field not in payload]
-    if missing_fields:
-        raise ValueError(f"Missing required patient fields: {', '.join(missing_fields)}")
-
+def inspect_patient_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate a payload without raising so the agent can continue with partial data."""
     cleaned: dict[str, Any] = {}
+    missing_fields: list[str] = []
     errors: list[str] = []
 
     for field in NUMERIC_FEATURES:
         value = payload.get(field)
+        if value is None or (isinstance(value, str) and not value.strip()) or pd.isna(value):
+            missing_fields.append(field)
+            continue
+
         try:
             numeric_value = float(value)
         except (TypeError, ValueError):
@@ -164,7 +165,12 @@ def coerce_and_validate_patient_payload(payload: Mapping[str, Any]) -> dict[str,
         cleaned[field] = numeric_value
 
     for field in CATEGORICAL_FEATURES:
-        value = normalize_categorical_value(field, payload.get(field))
+        raw_value = payload.get(field)
+        if raw_value is None or (isinstance(raw_value, str) and not raw_value.strip()) or pd.isna(raw_value):
+            missing_fields.append(field)
+            continue
+
+        value = normalize_categorical_value(field, raw_value)
         options = ALLOWED_CATEGORIES[field]
         if value not in options:
             errors.append(
@@ -173,10 +179,27 @@ def coerce_and_validate_patient_payload(payload: Mapping[str, Any]) -> dict[str,
             continue
         cleaned[field] = value
 
-    if errors:
-        raise ValueError(" ".join(errors))
+    return {
+        "normalized_data": cleaned,
+        "missing_fields": sorted(set(missing_fields), key=FEATURE_COLUMNS.index),
+        "errors": errors,
+    }
 
-    return cleaned
+
+def coerce_and_validate_patient_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate and normalize a single patient payload."""
+    missing_fields = [field for field in FEATURE_COLUMNS if field not in payload]
+    if missing_fields:
+        raise ValueError(f"Missing required patient fields: {', '.join(missing_fields)}")
+
+    inspected = inspect_patient_payload(payload)
+    if inspected["missing_fields"]:
+        raise ValueError(
+            "Missing required patient fields: " + ", ".join(inspected["missing_fields"])
+        )
+    if inspected["errors"]:
+        raise ValueError(" ".join(inspected["errors"]))
+    return dict(inspected["normalized_data"])
 
 
 def build_feature_frame(payload: Mapping[str, Any]) -> pd.DataFrame:
@@ -198,9 +221,7 @@ def format_feature_value(feature_name: str, value: Any) -> str:
     return str(value)
 
 
-def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Create human-readable clinical-style signals to drive retrieval and guidance."""
-    patient = coerce_and_validate_patient_payload(patient_data)
+def _derive_risk_signals(patient: Mapping[str, Any]) -> list[dict[str, Any]]:
     signals: list[dict[str, Any]] = []
 
     def add_signal(identifier: str, label: str, severity: str, value: Any, topics: list[str]) -> None:
@@ -214,9 +235,9 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             }
         )
 
-    if patient["age"] >= 60:
+    if patient.get("age", 0) >= 60:
         add_signal("age", "Older age profile", "moderate", patient["age"], ["preventive", "follow-up"])
-    if patient["systolic_bp"] >= 140:
+    if patient.get("systolic_bp", 0) >= 140:
         add_signal(
             "blood_pressure",
             "Elevated systolic blood pressure",
@@ -224,7 +245,7 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             patient["systolic_bp"],
             ["blood", "pressure", "bp", "warning", "follow-up"],
         )
-    elif patient["systolic_bp"] >= 130:
+    elif patient.get("systolic_bp", 0) >= 130:
         add_signal(
             "blood_pressure_borderline",
             "Borderline high systolic blood pressure",
@@ -233,7 +254,7 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             ["blood", "pressure", "bp", "monitoring"],
         )
 
-    if patient["cholesterol"] >= 240:
+    if patient.get("cholesterol", 0) >= 240:
         add_signal(
             "cholesterol",
             "High total cholesterol",
@@ -241,7 +262,7 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             patient["cholesterol"],
             ["cholesterol", "diet", "exercise"],
         )
-    elif patient["cholesterol"] >= 200:
+    elif patient.get("cholesterol", 0) >= 200:
         add_signal(
             "cholesterol_borderline",
             "Borderline cholesterol",
@@ -250,9 +271,9 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             ["cholesterol", "diet"],
         )
 
-    if patient["bmi"] >= 30:
+    if patient.get("bmi", 0) >= 30:
         add_signal("bmi", "Obesity-range BMI", "high", patient["bmi"], ["diet", "exercise", "weight"])
-    elif patient["bmi"] >= 25:
+    elif patient.get("bmi", 0) >= 25:
         add_signal(
             "bmi_overweight",
             "Above-ideal BMI",
@@ -261,13 +282,13 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             ["diet", "exercise", "weight"],
         )
 
-    if patient["smoker"] == "Yes":
+    if patient.get("smoker") == "Yes":
         add_signal("smoking", "Current smoker", "high", "Yes", ["lifestyle", "warning", "preventive"])
 
-    if patient["diabetes"] == "Yes":
+    if patient.get("diabetes") == "Yes":
         add_signal("diabetes", "Diabetes present", "high", "Yes", ["diet", "follow-up", "preventive"])
 
-    if patient["exercise_angina"] == "Yes":
+    if patient.get("exercise_angina") == "Yes":
         add_signal(
             "exercise_angina",
             "Exercise-induced angina",
@@ -276,7 +297,7 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             ["warning", "preventive", "follow-up"],
         )
 
-    if patient["chest_pain"] in {"typical", "asymptomatic"}:
+    if patient.get("chest_pain") in {"typical", "asymptomatic"}:
         add_signal(
             "chest_pain",
             f"Chest pain pattern: {humanize_slug(patient['chest_pain'])}",
@@ -285,7 +306,7 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
             ["warning", "preventive"],
         )
 
-    if patient["max_heart_rate"] < 120:
+    if patient.get("max_heart_rate", 999) < 120:
         add_signal(
             "heart_rate",
             "Low recorded max heart rate",
@@ -295,3 +316,15 @@ def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]
         )
 
     return signals
+
+
+def derive_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Create human-readable clinical-style signals to drive retrieval and guidance."""
+    patient = coerce_and_validate_patient_payload(patient_data)
+    return _derive_risk_signals(patient)
+
+
+def derive_partial_risk_signals(patient_data: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Create risk signals from whatever validated fields are currently available."""
+    normalized = inspect_patient_payload(patient_data)["normalized_data"]
+    return _derive_risk_signals(normalized)

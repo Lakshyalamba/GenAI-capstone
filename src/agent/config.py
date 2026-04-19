@@ -16,6 +16,8 @@ class AgentConfig:
     llm_enabled: bool
     fallback_mode: str
     knowledge_base_dir: str
+    vector_backend: str
+    vector_store_dir: str
 
 
 def _package_available(module_name: str) -> bool:
@@ -56,21 +58,35 @@ def get_agent_config() -> AgentConfig:
         llm_enabled=llm_enabled,
         fallback_mode="grounded-rules",
         knowledge_base_dir=str(KNOWLEDGE_BASE_DIR),
+        vector_backend="chroma",
+        vector_store_dir="data/vectorstore/chroma_db",
     )
 
-
-import streamlit as st
-
-@st.cache_data(show_spinner=False)
 def validate_agent_config() -> dict[str, object]:
     """Return a UI-friendly status payload for agent startup checks."""
     config = get_agent_config()
     issues: list[str] = []
+    try:
+        from src.agent.retrieval import get_vectorstore_status
+
+        vectorstore_status = get_vectorstore_status()
+    except Exception as exc:  # pragma: no cover - defensive status fallback
+        vectorstore_status = {
+            "backend": "chroma",
+            "persist_directory": "data/vectorstore/chroma_db",
+            "persisted": False,
+            "dependencies_available": False,
+        }
+        issues.append(f"Vector store status check failed: {exc}")
 
     if not config.api_key_present:
         issues.append("GEMINI_API_KEY is not set; using grounded rule-based recommendations.")
     if config.api_key_present and not config.sdk_package_available:
         issues.append("The `google-genai` package is unavailable; using grounded rule-based recommendations.")
+    if not vectorstore_status["dependencies_available"]:
+        issues.append(
+            "Vector retrieval dependencies are unavailable; install the LangGraph/Chroma requirements before running the assistant."
+        )
 
     status = "llm_enabled" if config.llm_enabled else "fallback_only"
 
@@ -80,6 +96,7 @@ def validate_agent_config() -> dict[str, object]:
             "status": status,
             "issues": issues,
             "fallback_available": True,
+            "vectorstore": vectorstore_status,
         }
     )
     return payload

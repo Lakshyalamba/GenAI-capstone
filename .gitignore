@@ -14,3 +14,5 @@ build/
 *.pyc
 *.pyo
 *.tmp
+data/vectorstore/*
+!data/vectorstore/.gitkeep

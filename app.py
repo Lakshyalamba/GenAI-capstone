@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.agent.config import validate_agent_config
+from src.agent.retrieval import ensure_vectorstore, get_vectorstore_status
 from src.agent.workflow import run_agent_workflow
 from src.data_processing import load_processed_dataset, summarize_dataset
 from src.features import (
@@ -52,6 +53,12 @@ def get_dashboard_dataset() -> pd.DataFrame:
 @st.cache_resource(show_spinner=False)
 def get_model_bundle() -> dict[str, Any]:
     return load_artifact_bundle()
+
+
+@st.cache_resource(show_spinner=False)
+def load_agent_vectorstore() -> str:
+    ensure_vectorstore()
+    return "ready"
 
 
 def inject_styles() -> None:
@@ -581,8 +588,9 @@ def build_risk_badge(risk_category: str) -> str:
         "Low": "risk-low",
         "Moderate": "risk-moderate",
         "High": "risk-high",
-    }[risk_category]
-    return f'<span class="risk-pill {css}">{risk_category} risk</span>'
+    }.get(risk_category, "risk-moderate")
+    label = f"{risk_category} risk" if risk_category in {"Low", "Moderate", "High"} else str(risk_category)
+    return f'<span class="risk-pill {css}">{label}</span>'
 
 
 def apply_plot_style(figure: go.Figure, height: int = 360) -> go.Figure:
@@ -1349,10 +1357,21 @@ def render_agentic_health_tab(
     bundle: dict[str, Any] | None, bundle_error: str | None
 ) -> None:
     agent_status = validate_agent_config()
-    status_icon = "check_circle" if agent_status["status"] == "llm_enabled" else "info"
-    status_text = f"LLM Active ({agent_status['model_name']})" if agent_status["status"] == "llm_enabled" else "Grounded Fallback Mode Active"
-    status_bg = "#d1fae5" if agent_status["status"] == "llm_enabled" else "#ccfbf1"
-    status_text_color = "#065f46" if agent_status["status"] == "llm_enabled" else "#115e59"
+    vector_status = agent_status.get("vectorstore", {})
+    vector_error: str | None = None
+    if vector_status.get("dependencies_available"):
+        try:
+            load_agent_vectorstore()
+            vector_status = get_vectorstore_status()
+        except Exception as exc:
+            vector_error = str(exc)
+
+    llm_status = (
+        f"LLM Active ({agent_status['model_name']})"
+        if agent_status["status"] == "llm_enabled"
+        else "Deterministic Fallback Mode"
+    )
+    vector_label = "Vector DB Ready" if vector_status.get("persisted") else "Vector DB Auto-Build"
 
     st.markdown(
         f"""
@@ -1360,10 +1379,15 @@ def render_agentic_health_tab(
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem;">
                 <div style="flex: 1; min-width: 300px;">
                     <h2 style="font-family: 'Inter', sans-serif; font-size: 2.1rem; font-weight: 800; color: #0f283d; margin: 0 0 0.4rem 0; letter-spacing: -0.03em; line-height: 1.2;">Clinical Strategist Agent</h2>
-                    <p style="font-size: 1.05rem; color: #475569; margin: 0; max-width: 700px; line-height: 1.6; font-weight: 400;">This AI subsystem fuses predictive diagnostic probabilities with grounded medical retrieval to generate highly contextual treatment recommendations.</p>
+                    <p style="font-size: 1.05rem; color: #475569; margin: 0; max-width: 700px; line-height: 1.6; font-weight: 400;">This LangGraph workflow combines ML risk scoring, vector-DB retrieval, and guarded report generation to produce a structured cardiovascular support report.</p>
                 </div>
-                <div style="background:{status_bg}; color:{status_text_color}; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);">
-                    <span class="material-symbols-outlined" style="font-size:1.2rem;">{status_icon}</span> {status_text}
+                <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                    <div style="background:#ccfbf1; color:#115e59; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);">
+                        <span class="material-symbols-outlined" style="font-size:1.2rem;">smart_toy</span> {llm_status}
+                    </div>
+                    <div style="background:#eff6ff; color:#1d4ed8; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);">
+                        <span class="material-symbols-outlined" style="font-size:1.2rem;">database</span> {vector_label}
+                    </div>
                 </div>
             </div>
         </div>
@@ -1375,8 +1399,15 @@ def render_agentic_health_tab(
         st.error(bundle_error or "Model artifacts are not available.")
         return
 
+    for issue in agent_status.get("issues", []):
+        st.info(issue)
+
+    if vector_error:
+        st.error(f"Vector store setup failed: {vector_error}")
+        st.code("python3 scripts/build_vectorstore.py")
+
     defaults = st.session_state.get("agent_patient_profile", default_patient_profile())
-    
+
     with st.form("agent_generation_form"):
         st.markdown('<div class="section-kicker" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; margin-top: 0; margin-bottom: 1rem;">Primary Clinical Directive Focus</div>', unsafe_allow_html=True)
         focus_query = st.text_input(
@@ -1393,54 +1424,81 @@ def render_agentic_health_tab(
         )
 
     if generate:
-        try:
-            response = run_agent_workflow(
-                patient_data=patient, question=focus_query, bundle=bundle
-            )
-            st.session_state["agent_patient_profile"] = patient
-            st.session_state["agent_focus_query"] = focus_query
-            st.session_state["agent_response"] = response
-        except Exception as exc:
-            st.error(f"Agent run failed: {exc}")
+        response = run_agent_workflow(
+            patient_data=patient, question=focus_query, bundle=bundle
+        )
+        st.session_state["agent_patient_profile"] = patient
+        st.session_state["agent_focus_query"] = focus_query
+        st.session_state["agent_response"] = response
 
     response = st.session_state.get("agent_response")
     if response:
+        if response.get("partial_output"):
+            st.warning(
+                "Partial output generated. The workflow continued safely despite missing data or a failed tool step."
+            )
+        for message in response.get("fallback_status", []):
+            st.info(message)
+
         st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
         left, right = st.columns([0.65, 0.35])
         with left:
             render_panel_open()
-            st.markdown('<div class="section-kicker" style="margin-top:0;">Generated Clinical Report</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Structured Health Report</div>', unsafe_allow_html=True)
             st.markdown(
                 build_risk_badge(response["prediction"]["risk_category"]),
                 unsafe_allow_html=True,
             )
-            st.markdown(f"<p style='font-size:0.95rem; color:#334155; line-height:1.6;'>{response['summary']}</p>", unsafe_allow_html=True)
-            st.markdown(f"<p style='font-size:0.95rem; color:#334155; line-height:1.6; margin-bottom:1.5rem;'>{response['guidance_note']}</p>", unsafe_allow_html=True)
-            
-            st.markdown('<div style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#475569; margin-bottom:0.75rem;">Structured Guidelines</div>', unsafe_allow_html=True)
-            for item in response["recommendations"]:
-                st.markdown(
-                    f"<div style='display:flex; align-items:flex-start; margin-bottom:0.6rem;'>"
-                    f"<span class='material-symbols-outlined' style='color:#0d9488; font-size:1.15rem; margin-right:0.5rem; margin-top:0.1rem;'>check_circle</span>"
-                    f"<p style='margin:0; font-size:0.95rem; color:#334155; line-height:1.5;'>{item}</p></div>", 
-                    unsafe_allow_html=True
+            metric_columns = st.columns(3)
+            with metric_columns[0]:
+                render_metric_tile(
+                    "Risk Probability",
+                    f"{response['risk_probability']:.1%}" if response["risk_probability"] is not None else "Unavailable",
+                    "ML probability output",
                 )
-            st.markdown("<hr style='margin:1.5rem 0; border-color:#e2e8f0;'>", unsafe_allow_html=True)
-            st.markdown(f"<p style='font-size:0.8rem; color:#64748b; margin:0;'>{response['disclaimer']}</p>", unsafe_allow_html=True)
+            with metric_columns[1]:
+                render_metric_tile(
+                    "Key Factors",
+                    str(len(response.get("prediction", {}).get("important_features", []))),
+                    "Visible ML or rule-based factors",
+                )
+            with metric_columns[2]:
+                render_metric_tile(
+                    "Generation Mode",
+                    response.get("generation_mode", "deterministic"),
+                    "Final report renderer",
+                )
+
+            st.markdown(response["final_report"]["rendered_markdown"])
             render_panel_close()
 
         with right:
             render_panel_open()
-            st.markdown('<div class="section-kicker" style="margin-top:0;">Retrieved Guidance Citations</div>', unsafe_allow_html=True)
-            for document in response["kb_documents"]:
-                st.markdown(
-                    f"<div style='margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid #f1f5f9;'>"
-                    f"<strong style='color:#0f283d; font-size:0.95rem; display:block; margin-bottom:0.25rem;'>{document['title']}</strong>"
-                    f"<span style='background:#f0fdfa; color:#0d9488; font-family:monospace; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.75rem;'>{document['source']}</span>"
-                    f"<p style='font-size:0.85rem; color:#475569; margin-top:0.6rem; line-height:1.5;'>{document['snippet']}</p>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Key Factors</div>', unsafe_allow_html=True)
+            factors = response.get("prediction", {}).get("important_features", [])
+            if factors:
+                factor_frame = pd.DataFrame(factors)[["feature", "direction", "contribution"]].copy()
+                factor_frame["contribution"] = factor_frame["contribution"].map(lambda value: f"{value:+.3f}")
+                st.dataframe(factor_frame, use_container_width=True, hide_index=True)
+            else:
+                st.info("No model-derived factor explanation is available for this run.")
+            render_panel_close()
+
+            render_panel_open()
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Retrieved Sources & Chunks</div>', unsafe_allow_html=True)
+            with st.expander("Source Attributions", expanded=True):
+                for source in response.get("retrieved_sources", []) or ["No guideline chunk was retrieved."]:
+                    st.markdown(f"- {source}")
+            with st.expander("Retrieved Chunks", expanded=False):
+                if response.get("retrieved_chunks"):
+                    for chunk in response["retrieved_chunks"]:
+                        st.markdown(
+                            f"**{chunk['document_title']}**  \n"
+                            f"`{chunk['source_file']}` | `{chunk['section_heading']}` | `{chunk['chunk_id']}`"
+                        )
+                        st.caption(chunk["snippet"])
+                else:
+                    st.info("No guideline chunk was retrieved for this run.")
             render_panel_close()
 
             render_panel_open()
@@ -1452,6 +1510,10 @@ def render_agentic_health_tab(
                 }
             )
             st.dataframe(trace_df, use_container_width=True, hide_index=True)
+            if response.get("errors"):
+                with st.expander("Workflow Errors", expanded=False):
+                    for error in response["errors"]:
+                        st.markdown(f"- {error}")
             render_panel_close()
 
         render_panel_open()
@@ -1484,13 +1546,8 @@ def render_agentic_health_tab(
         follow_up_response = st.session_state.get("agent_follow_up_response")
         if follow_up_response:
             st.markdown("<hr style='margin:1.5rem 0; border-color:#e2e8f0;'>", unsafe_allow_html=True)
-            st.markdown(
-                f"<div style='background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem;'>"
-                f"<div style='display:flex; align-items:center; margin-bottom:0.75rem; color:#0d9488;'><span class='material-symbols-outlined' style='margin-right:0.5rem;'>smart_toy</span><strong style='font-size:0.95rem;'>Agent Response</strong></div>"
-                f"<p style='margin:0; font-size:0.95rem; color:#334155; line-height:1.6;'>{follow_up_response['follow_up_answer'] or 'No supplemental response was generated.'}</p>"
-                f"</div>", 
-                unsafe_allow_html=True
-            )
+            st.markdown("**Agent Response**")
+            st.markdown(follow_up_response["follow_up_answer"] or "No supplemental response was generated.")
         render_panel_close()
 
 
