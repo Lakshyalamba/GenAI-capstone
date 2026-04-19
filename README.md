@@ -1,3 +1,15 @@
+---
+title: CardioRisk AI
+emoji: "🫀"
+colorFrom: blue
+colorTo: teal
+sdk: streamlit
+sdk_version: "1.40.0"
+python_version: "3.11"
+app_file: app.py
+pinned: false
+---
+
 # CardioRisk AI
 
 CardioRisk AI is a deployment-ready cardiovascular health risk prediction system built around a logistic regression model, a saved preprocessing pipeline, a multi-tab Streamlit application, and a retrieval-grounded cardiovascular assistant.
