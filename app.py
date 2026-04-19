@@ -1342,18 +1342,151 @@ def render_batch_scoring_tab(
 def render_agentic_health_tab(
     bundle: dict[str, Any] | None, bundle_error: str | None
 ) -> None:
+    agent_status = validate_agent_config()
+    status_icon = "check_circle" if agent_status["status"] == "llm_enabled" else "info"
+    status_text = f"LLM Active ({agent_status['model_name']})" if agent_status["status"] == "llm_enabled" else "Grounded Fallback Mode Active"
+    status_bg = "#d1fae5" if agent_status["status"] == "llm_enabled" else "#ccfbf1"
+    status_text_color = "#065f46" if agent_status["status"] == "llm_enabled" else "#115e59"
+
     st.markdown(
-        build_page_header(
-            "Clinical Strategist Agent",
-            "The grounded strategist experience will be finalized in the next commit.",
-            bundle,
-            bundle_error,
-        ),
+        f"""
+        <div style="margin-bottom: 2.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h2 style="font-family: 'Inter', sans-serif; font-size: 2.1rem; font-weight: 800; color: #0f283d; margin: 0 0 0.4rem 0; letter-spacing: -0.03em; line-height: 1.2;">Clinical Strategist Agent</h2>
+                    <p style="font-size: 1.05rem; color: #475569; margin: 0; max-width: 700px; line-height: 1.6; font-weight: 400;">This AI subsystem fuses predictive diagnostic probabilities with grounded medical retrieval to generate highly contextual treatment recommendations.</p>
+                </div>
+                <div style="background:{status_bg}; color:{status_text_color}; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);">
+                    <span class="material-symbols-outlined" style="font-size:1.2rem;">{status_icon}</span> {status_text}
+                </div>
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    render_panel_open()
-    st.info("Agent workflow presentation is staged for the final commit.")
-    render_panel_close()
+
+    if bundle_error or bundle is None:
+        st.error(bundle_error or "Model artifacts are not available.")
+        return
+
+    defaults = st.session_state.get("agent_patient_profile", default_patient_profile())
+    
+    with st.form("agent_generation_form"):
+        st.markdown('<div class="section-kicker" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; margin-top: 0; margin-bottom: 1rem;">Primary Clinical Directive Focus</div>', unsafe_allow_html=True)
+        focus_query = st.text_input(
+            "Agent Directive Target",
+            value=st.session_state.get("agent_focus_query", ""),
+            placeholder="e.g. Prioritize immediate lifestyle interventions for high lipid panels.",
+            label_visibility="collapsed"
+        )
+        st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+        patient = render_patient_input_fields("agent", defaults=defaults)
+        st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+        generate = st.form_submit_button(
+            "Run AI Assessment Profile", use_container_width=True, type="primary"
+        )
+
+    if generate:
+        try:
+            response = run_agent_workflow(
+                patient_data=patient, question=focus_query, bundle=bundle
+            )
+            st.session_state["agent_patient_profile"] = patient
+            st.session_state["agent_focus_query"] = focus_query
+            st.session_state["agent_response"] = response
+        except Exception as exc:
+            st.error(f"Agent run failed: {exc}")
+
+    response = st.session_state.get("agent_response")
+    if response:
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+        left, right = st.columns([0.65, 0.35])
+        with left:
+            render_panel_open()
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Generated Clinical Report</div>', unsafe_allow_html=True)
+            st.markdown(
+                build_risk_badge(response["prediction"]["risk_category"]),
+                unsafe_allow_html=True,
+            )
+            st.markdown(f"<p style='font-size:0.95rem; color:#334155; line-height:1.6;'>{response['summary']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:0.95rem; color:#334155; line-height:1.6; margin-bottom:1.5rem;'>{response['guidance_note']}</p>", unsafe_allow_html=True)
+            
+            st.markdown('<div style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#475569; margin-bottom:0.75rem;">Structured Guidelines</div>', unsafe_allow_html=True)
+            for item in response["recommendations"]:
+                st.markdown(
+                    f"<div style='display:flex; align-items:flex-start; margin-bottom:0.6rem;'>"
+                    f"<span class='material-symbols-outlined' style='color:#0d9488; font-size:1.15rem; margin-right:0.5rem; margin-top:0.1rem;'>check_circle</span>"
+                    f"<p style='margin:0; font-size:0.95rem; color:#334155; line-height:1.5;'>{item}</p></div>", 
+                    unsafe_allow_html=True
+                )
+            st.markdown("<hr style='margin:1.5rem 0; border-color:#e2e8f0;'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:0.8rem; color:#64748b; margin:0;'>{response['disclaimer']}</p>", unsafe_allow_html=True)
+            render_panel_close()
+
+        with right:
+            render_panel_open()
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Retrieved Guidance Citations</div>', unsafe_allow_html=True)
+            for document in response["kb_documents"]:
+                st.markdown(
+                    f"<div style='margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid #f1f5f9;'>"
+                    f"<strong style='color:#0f283d; font-size:0.95rem; display:block; margin-bottom:0.25rem;'>{document['title']}</strong>"
+                    f"<span style='background:#f0fdfa; color:#0d9488; font-family:monospace; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.75rem;'>{document['source']}</span>"
+                    f"<p style='font-size:0.85rem; color:#475569; margin-top:0.6rem; line-height:1.5;'>{document['snippet']}</p>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+            render_panel_close()
+
+            render_panel_open()
+            st.markdown('<div class="section-kicker" style="margin-top:0;">Workflow Trace Logs</div>', unsafe_allow_html=True)
+            trace_df = pd.DataFrame(
+                {
+                    "Step": list(range(1, len(response["workflow_trace"]) + 1)),
+                    "Executing Node": response["workflow_trace"],
+                }
+            )
+            st.dataframe(trace_df, use_container_width=True, hide_index=True)
+            render_panel_close()
+
+        render_panel_open()
+        st.markdown('<div class="section-kicker" style="margin-top:0;">Agentic Q&A Sandbox</div>', unsafe_allow_html=True)
+        follow_up_columns = st.columns([0.82, 0.18])
+        with follow_up_columns[0]:
+            follow_up_question = st.text_input(
+                "Ask a cardiovascular follow-up question",
+                key="agent_follow_up_question",
+                placeholder="Example: Which lifestyle change matters most for this patient first?",
+                label_visibility="collapsed"
+            )
+        with follow_up_columns[1]:
+            ask_follow_up = st.button("Query Agent Context", use_container_width=True)
+
+        if ask_follow_up:
+            if not follow_up_question.strip():
+                st.warning("Enter a follow-up query to investigate.")
+            else:
+                try:
+                    follow_up_response = run_agent_workflow(
+                        patient_data=st.session_state["agent_patient_profile"],
+                        question=follow_up_question,
+                        bundle=bundle,
+                    )
+                    st.session_state["agent_follow_up_response"] = follow_up_response
+                except Exception as exc:
+                    st.error(f"Agent interrogation failed: {exc}")
+
+        follow_up_response = st.session_state.get("agent_follow_up_response")
+        if follow_up_response:
+            st.markdown("<hr style='margin:1.5rem 0; border-color:#e2e8f0;'>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem;'>"
+                f"<div style='display:flex; align-items:center; margin-bottom:0.75rem; color:#0d9488;'><span class='material-symbols-outlined' style='margin-right:0.5rem;'>smart_toy</span><strong style='font-size:0.95rem;'>Agent Response</strong></div>"
+                f"<p style='margin:0; font-size:0.95rem; color:#334155; line-height:1.6;'>{follow_up_response['follow_up_answer'] or 'No supplemental response was generated.'}</p>"
+                f"</div>", 
+                unsafe_allow_html=True
+            )
+        render_panel_close()
+
 
 def main() -> None:
     st.set_page_config(
