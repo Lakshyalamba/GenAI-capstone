@@ -175,12 +175,18 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Install development/test dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 Optional but recommended if you use a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ## Train or refresh the ML artifacts
@@ -218,6 +224,7 @@ streamlit run dashboard/app.py
 Run the test suite with:
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
 
