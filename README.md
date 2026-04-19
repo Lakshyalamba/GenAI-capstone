@@ -2,7 +2,7 @@
 title: CardioRisk AI
 emoji: "🫀"
 colorFrom: blue
-colorTo: teal
+colorTo: indigo
 sdk: streamlit
 sdk_version: "1.40.0"
 python_version: "3.11"
